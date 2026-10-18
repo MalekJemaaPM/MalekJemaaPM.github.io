@@ -11,7 +11,7 @@ const DONNEES = {
   nom: "Malek JEMAA",
   titre: "Chef de projet PMP® / PMO — Gouvernance de portefeuille & transformation digitale",
   accroche:
-    "Plus de 9 ans d'expérience à piloter des programmes de transformation digitale (IT, ERP, CRM, applications métier). Je mets en place la gouvernance, structure les portefeuilles de projets et aligne l'exécution technologique sur les objectifs business.",
+    "Plus de 10 ans d'expérience à piloter des programmes de transformation digitale (IT, ERP, CRM, applications métier). Je mets en place la gouvernance, structure les portefeuilles de projets et aligne l'exécution technologique sur les objectifs business.",
   email: "malek.jmaa2024@gmail.com",
   telephone: "+216 52 01 77 31",
   localisation: "Soukra, Ariana, Tunisie",
