@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Portfolio</title>
+  <meta name="description" content="CV et portfolio : chef de projet PMP / PMO, gouvernance de portefeuille et transformation digitale.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <nav>
+    <div class="conteneur" id="menu"></div>
+  </nav>
+
+  <header class="hero">
+    <div class="conteneur">
+      <h1 id="nom"></h1>
+      <p class="titre" id="titre"></p>
+      <p class="accroche" id="accroche"></p>
+      <div class="contact" id="contact"></div>
+      <div class="boutons" id="boutons"></div>
+    </div>
+  </header>
+
+  <main class="conteneur" id="contenu"></main>
+
+  <footer>
+    <div class="conteneur" id="pied"></div>
+  </footer>
+
+  <div id="zoom"><img alt=""></div>
+
+  <script src="donnees.js"></script>
+  <script>
+    // Construit la page à partir de donnees.js (pas besoin de modifier ce fichier).
+    const d = DONNEES;
+    const $ = (id) => document.getElementById(id);
+
+    // Échappe le texte pour éviter toute injection HTML.
+    const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+    // N'accepte que des liens http(s) ou mailto.
+    const urlSure = (u) => /^(https?:|mailto:)/i.test(u || "") ? esc(u) : "";
+    const lien = (u, texte, cls = "lien") => {
+      const s = urlSure(u);
+      return s ? `<a class="${cls}" href="${s}" target="_blank" rel="noopener">${texte}</a>` : "";
+    };
+    const liste = (a) => Array.isArray(a) ? a : [];
+
+    document.title = d.nom + " – " + d.titre;
+    $("nom").textContent = d.nom;
+    $("titre").textContent = d.titre;
+    $("accroche").textContent = d.accroche;
+
+    $("contact").innerHTML = [
+      d.localisation && `<span>${esc(d.localisation)}</span>`,
+      d.telephone && `<a href="tel:${esc(d.telephone.replace(/[^+\d]/g, ""))}">${esc(d.telephone)}</a>`,
+      d.email && `<a href="mailto:${esc(d.email)}">${esc(d.email)}</a>`
+    ].filter(Boolean).join("");
+
+    let boutons = "";
+    if (d.cvPdf) boutons += `<a class="bouton plein" href="${esc(d.cvPdf)}" download>Télécharger mon CV (PDF)</a>`;
+    liste(d.liens).forEach((l) => {
+      const u = urlSure(l.url);
+      if (u) boutons += `<a class="bouton" href="${u}" target="_blank" rel="noopener">${esc(l.nom)}</a>`;
+    });
+    $("boutons").innerHTML = boutons;
+
+    const puces = (a) => `<div class="puces">${liste(a).map((i) => `<span class="puce">${esc(i)}</span>`).join("")}</div>`;
+    const img = (src, alt) => src ? `<img class="zoomable" src="${esc(src)}" alt="${esc(alt)}" loading="lazy">` : "";
+
+    // Chaque section n'apparaît que si elle contient quelque chose.
+    const sections = [
+      { id: "competences", nom: "Compétences", liste: d.competences, html: () =>
+        d.competences.map((c) => `<div class="competence"><strong>${esc(c.categorie)}</strong>${puces(c.items)}</div>`).join("") },
+
+      { id: "experiences", nom: "Expériences", liste: d.experiences, html: () =>
+        d.experiences.map((e) => `<div class="ligne">
+          <div class="ligne-tete"><h3>${esc(e.poste)}</h3><span class="periode">${esc(e.periode)}</span></div>
+          <div class="sous">${esc(e.entreprise)}</div>
+          <ul>${liste(e.details).map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>`).join("") },
+
+      { id: "projets", nom: "Projets", liste: d.projets, cls: "masquer-impression", grille: "", html: () =>
+        d.projets.map((p) => `<article class="carte">${img(p.image, p.titre)}
+          <div class="corps"><h3>${esc(p.titre)}</h3><p>${esc(p.description)}</p>${puces(p.technologies)}
+          ${lien(p.lien, "Voir le projet →")}</div></article>`).join("") },
+
+      { id: "certifications", nom: "Certifications", liste: d.certifications, grille: "certifs", html: () =>
+        d.certifications.map((c) => `<article class="carte">${img(c.image, c.titre)}
+          <div class="corps"><h3>${esc(c.titre)}</h3>
+          <div class="meta">${esc([c.organisme, c.date].filter(Boolean).join(" · "))}</div>
+          ${lien(c.lien, "Vérifier →")}</div></article>`).join("") },
+
+      { id: "formations", nom: "Formation", liste: d.formations, html: () =>
+        d.formations.map((f) => `<div class="ligne">
+          <div class="ligne-tete"><h3>${esc(f.diplome)}</h3><span class="periode">${esc(f.periode)}</span></div>
+          <div class="sous">${esc(f.ecole)}</div></div>`).join("") },
+
+      { id: "actualites", nom: "Actualités", liste: d.actualites, cls: "masquer-impression", html: () =>
+        d.actualites.map((a) => `<article class="actu"><h3>${esc(a.titre)}</h3>
+          <div class="meta">${esc([a.date, a.lieu].filter(Boolean).join(" · "))}</div>
+          ${a.description ? `<p>${esc(a.description)}</p>` : ""}
+          ${liste(a.images).length ? `<div class="galerie">${a.images.map((s) => img(s, a.titre)).join("")}</div>` : ""}
+          ${lien(a.lien, "En savoir plus →")}</article>`).join("") }
+    ].filter((s) => liste(s.liste).length);
+
+    $("menu").innerHTML = sections.map((s) => `<a href="#${s.id}">${s.nom}</a>`).join("");
+    $("contenu").innerHTML = sections.map((s) =>
+      `<section id="${s.id}" class="${s.cls || ""}"><h2>${s.nom}</h2>` +
+      (s.grille !== undefined ? `<div class="grille ${s.grille}">${s.html()}</div>` : s.html()) +
+      `</section>`).join("");
+
+    // Agrandir une image au clic
+    const zoom = $("zoom"), zoomImg = zoom.querySelector("img");
+    document.addEventListener("click", (e) => {
+      if (e.target.classList.contains("zoomable")) {
+        zoomImg.src = e.target.src; zoomImg.alt = e.target.alt; zoom.classList.add("ouvert");
+      } else if (zoom.classList.contains("ouvert")) zoom.classList.remove("ouvert");
+    });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") zoom.classList.remove("ouvert"); });
+
+    $("pied").textContent = "© " + new Date().getFullYear() + " " + d.nom;
+  </script>
+</body>
+</html>
